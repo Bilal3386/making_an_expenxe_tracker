@@ -4,21 +4,31 @@ function saveToLocalStorage(event) {
     const description = event.target.description.value
     const category = event.target.category.value
     const obj = {experience, description, category}
-    localStorage.setItem(obj.experience, JSON.stringify(obj))
-    showNewUserOnScreen(obj)
+    axios.post('https://crudcrud.com/api/413446afaf6246c291fc09456534d045/appointmentData', obj)
+    .then(res => showNewUserOnScreen(res.data))
+    .catch(err => console.log(err))
+    // localStorage.setItem(obj.experience, JSON.stringify(obj))
+    // showNewUserOnScreen(obj)
 }
 
 window.addEventListener('DOMContentLoaded', () =>
 {
-    const localStorageObj = localStorage
-    const localStorageKeys = Object.keys(localStorageObj)
-    for(let i=0; i<localStorageKeys.length; i++)
-    {
-        const key = localStorageKeys[i]
-        const userDetailsString = localStorageObj[key]
-        const  userDetailsObj = JSON.parse(userDetailsString)
-        showNewUserOnScreen(userDetailsObj)
-    }
+    axios.get('https://crudcrud.com/api/413446afaf6246c291fc09456534d045/appointmentData')
+    .then(res => {
+        for(var i=0; i<res.data.length; i++){
+            showNewUserOnScreen(res.data[i])
+        }
+    })
+    .catch(err=> console.log(err))
+    // const localStorageObj = localStorage
+    // const localStorageKeys = Object.keys(localStorageObj)
+    // for(let i=0; i<localStorageKeys.length; i++)
+    // {
+    //     const key = localStorageKeys[i]
+    //     const userDetailsString = localStorageObj[key]
+    //     const  userDetailsObj = JSON.parse(userDetailsString)
+    //     showNewUserOnScreen(userDetailsObj)
+    // }
 }
 )
 
@@ -27,35 +37,75 @@ function showNewUserOnScreen(user)
     document.getElementById('experience').value = '';
     document.getElementById('description').value = '';
     document.getElementById('category').value ='';
-    if(localStorage.getItem(user.experience) !== null)
+    if(localStorage.getItem(user._id) !== null)
     {
         removeUserFromScreen(user.experience)
     }
+    //const editDetails = [`${user._id}`, `${user.experience}`, `${user.description}`, `${user.category}`,]
     const parentNode = document.getElementById('userList');
-    const childHTML = `<li id=${user.experience}> ${user.experience} - ${user.description} 
-    <button style="margin: 10px 2px; background: green; color:white" onclick=editUser('${user.experience}','${user.description}','${user.category}')>Edit</button>
-    <button style="margin: 10px 2px" onclick=deleteUser('${user.experience}')>Delete</button></li>`
+    const childHTML = `<li id=${user._id}> ${user.experience} - ${user.description} 
+    <button style="margin: 10px 2px; background: green; color:white" onclick=editUser('${user._id}','${user.experience}','${user.description}','${user.category}')>Edit</button>
+    <button style="margin: 10px 2px" onclick=deleteUser('${user._id}')>Delete</button></li>`
     parentNode.innerHTML = parentNode.innerHTML + childHTML
 }
-function editUser(experience, description, category)
+
+// axios.put(`https://crudcrud.com/api/9bc94c1e99484d7ebd974aad3fa151c8/appointmentData/${userId}`)
+//     .then((res) => {
+        
+//         editUser(userId, experience, description, category)
+//         console.log(res)
+//     }
+//     )
+//     .catch(err => console.log(err))
+async function editUser(userId, experience, description, category)
 {
-    document.getElementById('experience').value = experience;
-    document.getElementById('description').value = description;
-    document.getElementById('category').value = category;
-    deleteUser(experience)
+    console.log(userId)
+            document.getElementById('experience').value = experience;
+            document.getElementById('description').value = description;
+            document.getElementById('category').value = category;
+            const obj = {experience, description, category}
+    try{
+            let response  =  await axios.put(`https://crudcrud.com/api/413446afaf6246c291fc09456534d045/appointmentData/${userId}`, obj)
+            if(response.status === 200)
+            {
+            console.log(userId)
+            deleteUser(userId)
+            }
+    }
+    catch(error){
+        console.log(error.response.data.error)
+        }
+    
+    // document.getElementById('experience').value = experience;
+    // document.getElementById('description').value = description;
+    // document.getElementById('category').value = category;
+    // deleteUser(userId)
 }
 
-function deleteUser(obj)
+async function deleteUser(obj)
 {
-    localStorage.removeItem(obj)
-    removeUserFromScreen(obj)
+    try
+    {
+        let res = await axios.delete(`https://crudcrud.com/api/413446afaf6246c291fc09456534d045/appointmentData/${obj}`)
+        //console.log(obj)
+        if(res.status === 200)
+        {
+            removeUserFromScreen(obj)
+        }
+    }
+    catch (error) {
+        console.log(error.data)
+    }
+    // localStorage.removeItem(obj)
+    // removeUserFromScreen(obj)
 }
 
 function removeUserFromScreen(obj) 
 {
+    //console.log(obj)
     const parentNode = document.getElementById('userList')
     const childNodeToBeDeleted = document.getElementById(obj)
-    console.log(childNodeToBeDeleted)
+    console.log(childNodeToBeDeleted, parentNode, obj)
     if(childNodeToBeDeleted)
     {
         parentNode.removeChild(childNodeToBeDeleted)
